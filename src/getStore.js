@@ -2,6 +2,7 @@ import { createStore, applyMiddleware, compose } from 'redux';
 import { createLogger } from 'redux-logger';
 import { Iterable } from 'immutable';
 import thunk from 'redux-thunk';
+import createSagaMiddleware from 'redux-saga';
 
 import { getQuery } from './utility';
 import { reducer } from './combineReducers';
@@ -17,12 +18,16 @@ const logger = createLogger({
 });
 
 export const getStore = () => {
-  const middleWares = [thunk];
+  const sagaMiddleware = createSagaMiddleware();
+  const middleWares = [sagaMiddleware, thunk];
+
   if (getQuery()['logger']) {
     middleWares.push(logger);
   }
+
   const composables = [applyMiddleware(...middleWares)];
   const enhancer = compose(...composables);
   const store = createStore(reducer, defaultState, enhancer);
+
   return store;
 };
