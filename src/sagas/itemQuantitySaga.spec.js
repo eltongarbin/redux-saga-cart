@@ -11,10 +11,14 @@ import {
   FETCHING,
   FETCHED
 } from './../actions';
-import { handleIncreaseItemQuantity } from './itemQuantitySaga';
-import { currentUserSelector } from './../selectors';
+import {
+  itemQuantitySaga,
+  handleIncreaseItemQuantity,
+  handleDecreaseItemQuantity
+} from './itemQuantitySaga';
+import { currentUserSelector } from '../selectors';
 
-describe('item quantity saga', () => {
+describe.only('the item quantity saga', () => {
   let item;
   let user;
 
@@ -23,7 +27,33 @@ describe('item quantity saga', () => {
     user = fromJS({ id: 'ABCDE' });
   });
 
-  describe('handle increase item quantity', () => {
+  describe('the saga root', () => {
+    test('the saga root should listen for the events', () => {
+      const gen = itemQuantitySaga();
+      expect(gen.next().value).toEqual([
+        takeLatest(DECREASE_ITEM_QUANTITY, handleDecreaseItemQuantity),
+        takeLatest(INCREASE_ITEM_QUANTITY, handleIncreaseItemQuantity)
+      ]);
+    });
+  });
+
+  describe('handle decrease item quantity saga', () => {
+    test('decreasing the quantity of an item successfully', () => {
+      const gen = handleDecreaseItemQuantity(item);
+      expect(gen.next().value).toEqual(
+        put(setItemQuantityFetchStatus(FETCHING))
+      );
+      expect(gen.next().value).toEqual(select(currentUserSelector));
+      expect(gen.next(user).value).toEqual(
+        call(fetch, `http://localhost:8081/cart/remove/ABCDE/12345`)
+      );
+      expect(gen.next({ status: 200 }).value).toEqual(
+        put(setItemQuantityFetchStatus(FETCHED))
+      );
+    });
+  });
+
+  describe('handle increase item quantity saga', () => {
     let gen;
 
     beforeEach(() => {
@@ -37,13 +67,13 @@ describe('item quantity saga', () => {
       );
     });
 
-    test('increasing quantity successfully', () => {
+    test('increasing the quantity of an item successfully', () => {
       expect(gen.next({ status: 200 }).value).toEqual(
         put(setItemQuantityFetchStatus(FETCHED))
       );
     });
 
-    test('increasing quantity unsuccessfully', () => {
+    test('increasing the quantity of an item unsuccessfully', () => {
       expect(gen.next({ status: 500 }).value).toEqual(
         put(decreaseItemQuantity(item.id, true))
       );
