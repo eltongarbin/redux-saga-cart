@@ -4,7 +4,7 @@ import { eventChannel } from 'redux-saga';
 import { connect } from './../createSocketConnection';
 import { setCustomerServiceAvailability } from './../actions';
 
-export function* customerServiceAvailabilitySaga(params) {
+export function* customerServiceAvailabilitySaga() {
   const socket = connect();
   const chan = new eventChannel((emit) => {
     const enableSupportMessage = () => {
@@ -18,7 +18,10 @@ export function* customerServiceAvailabilitySaga(params) {
     socket.on('SUPPORT_AVAILABLE', enableSupportMessage);
     socket.on('SUPPORT_NOT_AVAILABLE', disableSupportMessage);
 
-    return () => {};
+    return () => {
+      socket.off('SUPPORT_AVAILABLE', enableSupportMessage);
+      socket.off('SUPPORT_NOT_AVAILABLE', disableSupportMessage());
+    };
   });
 
   while (true) {

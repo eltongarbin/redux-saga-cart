@@ -15,6 +15,8 @@ import { cartItemsSelector } from './../selectors';
 function* shipping() {
   yield put(setShippingFetchStatus(FETCHING));
   const items = yield select(cartItemsSelector);
+
+  // Turn all the item IDs into an API compatible string, and trim the last comma
   const itemRequestString = items
     .reduce((string, item) => {
       for (let i = 0; i < item.get('quantity'); i++) {
